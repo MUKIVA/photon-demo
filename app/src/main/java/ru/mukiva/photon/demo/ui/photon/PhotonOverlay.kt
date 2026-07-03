@@ -9,7 +9,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -26,29 +25,31 @@ import kotlin.math.min
 
 /**
  * Полноэкранный оверлей, рисующий белый фотон на канвасе. Геометрию берёт из
- * [LocalPhotonController], а анимацию перехода гонит через [PhotonController.animate].
+ * [LocalPhotonController], а движение гонит единый пружинный кадровый цикл
+ * [PhotonController.run]: каждый кадр он читает живую цель и подтягивает к ней
+ * фотон пружиной с сохранением скорости (смена фокуса на лету не сбрасывает инерцию).
  *
  * Фотон рисуется в offscreen-слое, из которого вырезаются (BlendMode.Clear) все
  * зарегистрированные зоны [PhotonController.maskRegions]. В этих дырках свою часть
  * фотона и перекрашенный контент дорисовывают сами элементы (см. [recolorUnderPhoton]),
  * поэтому контент оказывается «поверх» фотона без возни с z-индексами.
  *
- * Всё, что меняется каждый кадр, читается внутри [drawBehind] — это инвалидирует
+ * Всё, что меняется каждый кадр, читается внутри блока [Canvas] — это инвалидирует
  * только draw, поэтому перелёт фотона не вызывает рекомпозиций.
  */
 @Composable
 fun PhotonOverlay(modifier: Modifier = Modifier) {
     val controller = LocalPhotonController.current
     val density = LocalDensity.current
-    val transition = controller.transition
 
     val dotPx = with(density) { PHOTON_DOT_SIZE_DP.dp.toPx() }
-    val fullShrinkPx = with(density) { PHOTON_FULL_SHRINK_DISTANCE_DP.dp.toPx() }
+    val fullShrinkSpeedPx = with(density) { PHOTON_FULL_SHRINK_SPEED_DP_S.dp.toPx() }
+    val maxAccelPx = with(density) { PHOTON_MAX_ACCEL_DP_S2.dp.toPx() }
     var overlayOffset by remember { mutableStateOf(Offset.Zero) }
     val layerPaint = remember { Paint() }
 
-    LaunchedEffect(controller, transition) {
-        transition?.let { controller.animate(it) }
+    LaunchedEffect(controller, maxAccelPx) {
+        controller.run(maxAccelPx = maxAccelPx)
     }
 
     Canvas(
@@ -56,7 +57,7 @@ fun PhotonOverlay(modifier: Modifier = Modifier) {
             .fillMaxSize()
             .onGloballyPositioned { overlayOffset = it.boundsInWindow().topLeft },
     ) {
-        val photon = controller.photonWindowRect(dotPx, fullShrinkPx)
+        val photon = controller.photonWindowRect(dotPx, fullShrinkSpeedPx)
             ?: return@Canvas
         val left = photon.left - overlayOffset.x
         val top = photon.top - overlayOffset.y

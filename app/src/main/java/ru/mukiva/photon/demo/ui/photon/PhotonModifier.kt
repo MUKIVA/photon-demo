@@ -127,7 +127,7 @@ private fun Modifier.photonMasked(
     var topLeft by remember { mutableStateOf(Offset.Zero) }
 
     val dotPx = with(density) { PHOTON_DOT_SIZE_DP.dp.toPx() }
-    val fullShrinkPx = with(density) { PHOTON_FULL_SHRINK_DISTANCE_DP.dp.toPx() }
+    val fullShrinkSpeedPx = with(density) { PHOTON_FULL_SHRINK_SPEED_DP_S.dp.toPx() }
 
     DisposableEffect(controller, id) {
         onDispose { controller.unregisterMask(id) }
@@ -140,7 +140,7 @@ private fun Modifier.photonMasked(
             controller.registerMask(id, windowBounds)
         }
         .drawWithContent {
-            val photon = controller.photonWindowRect(dotPx, fullShrinkPx)
+            val photon = controller.photonWindowRect(dotPx, fullShrinkSpeedPx)
             val local = photon?.let {
                 PhotonLocalRect(
                     topLeft = Offset(it.left - topLeft.x, it.top - topLeft.y),
