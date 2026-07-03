@@ -26,6 +26,9 @@ private const val MOVE_DURATION_MS = 320
 private const val DOT_SIZE_DP = 12
 private const val PHOTON_ALPHA = 0.5f
 
+// Дистанция прыжка, начиная с которой фотон сжимается в точку максимально.
+private const val FULL_SHRINK_DISTANCE_DP = 240
+
 /**
  * Полноэкранный оверлей, рисующий фотон на канвасе. Читает текущий переход из
  * [LocalPhotonController] и делегирует анимацию и вычисление геометрии
@@ -44,7 +47,10 @@ fun PhotonOverlay(modifier: Modifier = Modifier) {
     val photonColor = MaterialTheme.colorScheme.primary.copy(alpha = PHOTON_ALPHA)
 
     val dotPx = with(density) { DOT_SIZE_DP.dp.toPx() }
-    val renderer = remember(dotPx) { PhotonRenderer(MOVE_DURATION_MS, dotPx) }
+    val fullShrinkPx = with(density) { FULL_SHRINK_DISTANCE_DP.dp.toPx() }
+    val renderer = remember(dotPx, fullShrinkPx) {
+        PhotonRenderer(MOVE_DURATION_MS, dotPx, fullShrinkPx)
+    }
     var overlayOffset by remember { mutableStateOf(Offset.Zero) }
 
     LaunchedEffect(renderer, transition) {
