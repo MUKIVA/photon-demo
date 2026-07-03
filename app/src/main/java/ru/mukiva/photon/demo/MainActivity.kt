@@ -1,47 +1,32 @@
 package ru.mukiva.photon.demo
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.tv.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.Surface
-import ru.mukiva.photon.demo.ui.theme.PhotondemoTheme
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import ru.mukiva.photon.demo.ui.photon.PhotonController
+import ru.mukiva.photon.demo.ui.photon.PhotonOverlay
+import ru.mukiva.photon.demo.ui.theme.PhotonDemoTheme
 
-class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalTvMaterial3Api::class)
+internal class MainActivity : AppCompatActivity(), PhotonControllerHolder {
+    override val photonController = PhotonController()
+
+    private val photonView by lazy {
+        findViewById<ComposeView>(R.id.photonOverlay)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            PhotondemoTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = RectangleShape
-                ) {
-                    Greeting("Android")
-                }
+        setContentView(R.layout.activity_main)
+
+        photonView.setViewCompositionStrategy(
+            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+        )
+
+        photonView.setContent {
+            PhotonDemoTheme(photonController) {
+                PhotonOverlay()
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    PhotondemoTheme {
-        Greeting("Android")
     }
 }
