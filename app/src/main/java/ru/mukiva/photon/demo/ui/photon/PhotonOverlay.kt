@@ -45,6 +45,7 @@ fun PhotonOverlay(modifier: Modifier = Modifier) {
     val dotPx = with(density) { PHOTON_DOT_SIZE_DP.dp.toPx() }
     val fullShrinkSpeedPx = with(density) { PHOTON_FULL_SHRINK_SPEED_DP_S.dp.toPx() }
     val maxAccelPx = with(density) { PHOTON_MAX_ACCEL_DP_S2.dp.toPx() }
+    val glowPx = with(density) { PHOTON_GLOW_RADIUS_DP.dp.toPx() }
     var overlayOffset by remember { mutableStateOf(Offset.Zero) }
     val layerPaint = remember { Paint() }
 
@@ -65,6 +66,13 @@ fun PhotonOverlay(modifier: Modifier = Modifier) {
 
         val canvas = drawContext.canvas
         canvas.saveLayer(Rect(Offset.Zero, size), layerPaint)
+        canvas.drawPhotonGlow(
+            topLeft = Offset(left, top),
+            size = Size(photon.width, photon.height),
+            corner = CornerRadius(radius),
+            color = Color.White,
+            blurRadiusPx = glowPx,
+        )
         drawRoundRect(
             color = Color.White,
             topLeft = Offset(left, top),

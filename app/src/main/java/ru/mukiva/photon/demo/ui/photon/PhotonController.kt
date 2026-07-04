@@ -2,6 +2,7 @@ package ru.mukiva.photon.demo.ui.photon
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,6 +15,10 @@ import kotlin.math.sqrt
 
 // Общие для оверлея и модификаторов параметры фотона (в dp).
 internal const val PHOTON_DOT_SIZE_DP = 12
+
+// Радиус свечения (ореола) вокруг фотона. Ореол делается блюром, его альфа плавно
+// спадает к краям — на нём и проверяется покраска по полупрозрачным пикселям.
+internal const val PHOTON_GLOW_RADIUS_DP = 16
 
 // Скорость движения фотона (dp/s), при которой сжатие достигает максимума.
 internal const val PHOTON_FULL_SHRINK_SPEED_DP_S = 600
@@ -64,7 +69,7 @@ class PhotonController {
     // Текущая геометрия фотона в координатах окна — результат пружинной интеграции.
     private var center by mutableStateOf(Offset.Zero)
     private var size by mutableStateOf(Size.Zero)
-    private var speed by mutableStateOf(0f)
+    private var speed by mutableFloatStateOf(0f)
     private var initialized by mutableStateOf(false)
 
     // Скорость движения/изменения размера (px/s) — сохраняется между кадрами и

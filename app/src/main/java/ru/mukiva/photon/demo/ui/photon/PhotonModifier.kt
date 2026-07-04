@@ -93,6 +93,16 @@ fun Modifier.recolorUnderPhoton(color: Color): Modifier = composed {
         drawIntoCanvas { canvas ->
             canvas.saveLayer(Rect(Offset.Zero, size), layerPaint)
             drawContent()
+            // Тонируем контент пропорционально покрытию фотона: свечение (SrcAtop)
+            // красит по полупрозрачной альфе, ядро — полностью.
+            canvas.drawPhotonGlow(
+                topLeft = local.topLeft,
+                size = local.size,
+                corner = local.corner,
+                color = color,
+                blurRadiusPx = local.glowPx,
+                blendMode = BlendMode.SrcAtop,
+            )
             drawRoundRect(
                 color = color,
                 topLeft = local.topLeft,
@@ -110,6 +120,7 @@ private class PhotonLocalRect(
     val topLeft: Offset,
     val size: Size,
     val corner: CornerRadius,
+    val glowPx: Float,
 )
 
 /**
@@ -128,6 +139,7 @@ private fun Modifier.photonMasked(
 
     val dotPx = with(density) { PHOTON_DOT_SIZE_DP.dp.toPx() }
     val fullShrinkSpeedPx = with(density) { PHOTON_FULL_SHRINK_SPEED_DP_S.dp.toPx() }
+    val glowPx = with(density) { PHOTON_GLOW_RADIUS_DP.dp.toPx() }
 
     DisposableEffect(controller, id) {
         onDispose { controller.unregisterMask(id) }
@@ -146,15 +158,28 @@ private fun Modifier.photonMasked(
                     topLeft = Offset(it.left - topLeft.x, it.top - topLeft.y),
                     size = Size(it.width, it.height),
                     corner = CornerRadius(min(it.width, it.height) / 2f),
+                    glowPx = glowPx,
                 )
             }
             draw(local)
         }
 }
 
-/** Рисует белый кусок фотона под контентом, ограничив его границами элемента. */
+/**
+ * Рисует белый кусок фотона (ядро + свечение) под контентом, ограничив его
+ * границами элемента.
+ */
 private fun ContentDrawScope.drawPhotonPatch(local: PhotonLocalRect) {
     clipRect {
+        drawIntoCanvas { canvas ->
+            canvas.drawPhotonGlow(
+                topLeft = local.topLeft,
+                size = local.size,
+                corner = local.corner,
+                color = Color.White,
+                blurRadiusPx = local.glowPx,
+            )
+        }
         drawRoundRect(
             color = Color.White,
             topLeft = local.topLeft,
